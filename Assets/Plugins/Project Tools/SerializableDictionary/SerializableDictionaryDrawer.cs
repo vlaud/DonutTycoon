@@ -282,21 +282,37 @@ namespace Project.Tools.DictionaryHelp
 #if !ODIN_INSPECTOR
                 if (valueProp.type.StartsWith("InterfaceHolder"))
                 {
+                    MonoBehaviour newValue = null;
+                    EditorGUI.BeginChangeCheck();
+
                     var interfaceValue = valueProp.FindPropertyRelative("value");
-                    MonoBehaviour newValue = (MonoBehaviour)EditorGUI.ObjectField(valueRect,
+                    newValue = (MonoBehaviour)EditorGUI.ObjectField(valueRect,
                                               interfaceValue.objectReferenceValue, typeof(MonoBehaviour), true);
 
+                    if (EditorGUI.EndChangeCheck()) pendingObject = newValue;
+
+                    // Object Picker에서 선택이 끝났을 때만 처리
+                    if (Event.current.commandName == "ObjectSelectorClosed")
+                    {
+                        AssignIfValid(pendingObject);
+                    }
+
+                    // 드래그 앤 드롭 처리
                     if (interfaceValue.objectReferenceValue != newValue)
                     {
-                        if (newValue == null || newValue.GetComponent(
-                            fieldInfo.FieldType.GenericTypeArguments[1].GenericTypeArguments[0]) != null)
+                        AssignIfValid(newValue);
+                    }
+
+                    void AssignIfValid(MonoBehaviour obj)
+                    {
+                        var requiredInterface = fieldInfo.FieldType.GenericTypeArguments[1].GenericTypeArguments[0];
+                        if (obj == null || obj.GetComponent(requiredInterface) != null)
                         {
-                            interfaceValue.objectReferenceValue = newValue;
+                            interfaceValue.objectReferenceValue = obj;
                         }
                         else
                         {
-                            Debug.LogWarning($"Assigned object must implement interface " +
-                                             $"{fieldInfo.FieldType.GenericTypeArguments[1].GenericTypeArguments[0].Name}");
+                            Debug.LogWarning($"Assigned object must implement interface {requiredInterface.Name}");
                         }
                     }
                 }
@@ -390,6 +406,8 @@ namespace Project.Tools.DictionaryHelp
         private SerializedProperty property;
         private SerializedProperty dictionaryList;
         private SerializedProperty dividerPosProp;
+
+        private MonoBehaviour pendingObject;
     }
 }
 #endif
