@@ -11,9 +11,10 @@ namespace Project.Tools.DictionaryHelp
     {
         public override void OnGUI(Rect rect, SerializedProperty prop, GUIContent label)
         {
+            // ì§ë ¬í™” í”„ë¡œí¼í‹° X, ì§ë ¬í™” ì˜¤ë¸Œì íŠ¸ X, ì§ë ¬í™” ì˜¤ë¸Œì íŠ¸ì˜ íƒ€ê¹ƒ X
             if (prop == null || prop.serializedObject == null || prop.serializedObject.targetObject == null)
             {
-                return; // ¾ÈÀüÇÏ°Ô Å»Ãâ
+                return; // ì•ˆì „í•˜ê²Œ íƒˆì¶œ
             }
 
             var indentedRect = EditorGUI.IndentedRect(rect);
@@ -141,7 +142,7 @@ namespace Project.Tools.DictionaryHelp
                 SetupList(prop);
 
                 if (!prop.isExpanded) return;
-                
+
                 float newHeight = indentedRect.height - EditorGUIUtility.singleLineHeight - 3;
                 indentedRect.y += indentedRect.height - newHeight;
                 indentedRect.height = newHeight;
@@ -224,6 +225,12 @@ namespace Project.Tools.DictionaryHelp
 
             void Draw(Rect rect, SerializedProperty prop)
             {
+                if (prop.type.StartsWith("UnityEvent"))
+                {
+                    EditorGUI.PropertyField(rect, prop, true);
+                    return;
+                }
+
                 if (IsSingleLine(prop))
                 {
                     rect.height = EditorGUIUtility.singleLineHeight;
@@ -264,6 +271,33 @@ namespace Project.Tools.DictionaryHelp
                 dividerRect.width = dividerWidh;
             }
 
+            void AssignIfValid(Object obj, ref SerializedProperty prop, bool isKey = false)
+            {
+                if (obj == null)
+                {
+                    prop.objectReferenceValue = null;
+                    return;
+                }
+                // keyë¥¼ ì‚´í•€ë‹¤ë©´ 0, valueë¥¼ ì‚´í•€ë‹¤ë©´ 1
+                int index = isKey ? 0 : 1;
+
+                var requiredType = fieldInfo.FieldType.GenericTypeArguments[index].GenericTypeArguments[0];
+
+                // MonoBehaviour ì²˜ë¦¬
+                if (obj is MonoBehaviour mono && mono.GetComponent(requiredType) != null)
+                {
+                    prop.objectReferenceValue = mono;
+                    return;
+                }
+                // ScriptableObject ì²˜ë¦¬
+                else if (obj is ScriptableObject so && requiredType.IsAssignableFrom(so.GetType()))
+                {
+                    prop.objectReferenceValue = so;
+                    return;
+                }
+                Debug.LogWarning($"Assigned object must implement interface {requiredType.Name}");
+            }
+
             void Key()
             {
                 Draw(keyRect, keyProp);
@@ -273,47 +307,64 @@ namespace Project.Tools.DictionaryHelp
                     GUI.Label(new Rect(keyRect.x + keyRect.width - 20, keyRect.y - 1, 20, 20),
                               EditorGUIUtility.IconContent("console.erroricon"));
                 }
+
+                if (keyProp.type.StartsWith("UnityObjectWrapper"))
+                {
+                    EditorGUI.BeginChangeCheck();
+
+                    var scriptableValue = keyProp.FindPropertyRelative("value");
+                    ScriptableObject newValue = (ScriptableObject)EditorGUI.ObjectField(keyRect,
+                                                    scriptableValue.objectReferenceValue, typeof(ScriptableObject), true);
+
+                    if (EditorGUI.EndChangeCheck()) pendingScriptable = newValue;
+
+                    if (Event.current.commandName == "ObjectSelectorOpened") objectPickerActive = true;
+                    
+                    // Object Pickerì—ì„œ ì„ íƒì´ ëë‚¬ì„ ë•Œë§Œ ì²˜ë¦¬
+                    if (Event.current.commandName == "ObjectSelectorClosed")
+                    {
+                        objectPickerActive = false;
+                        AssignIfValid(pendingScriptable, ref scriptableValue, true);
+                    }
+                    
+                    // ë“œë˜ê·¸ ì•¤ ë“œë¡­ ì²˜ë¦¬
+                    if (!objectPickerActive && scriptableValue.objectReferenceValue != newValue)
+                    {
+                        AssignIfValid(newValue, ref scriptableValue, true);
+                    }
+                }
             }
 
+            // ë”•ì…”ë„ˆë¦¬ì˜ value ì²˜ë¦¬
             void Value()
             {
                 Draw(valueRect, valueProp);
 
 #if !ODIN_INSPECTOR
+                // InterfaceHolderì˜ ê²½ìš°
                 if (valueProp.type.StartsWith("InterfaceHolder"))
                 {
-                    MonoBehaviour newValue = null;
                     EditorGUI.BeginChangeCheck();
 
                     var interfaceValue = valueProp.FindPropertyRelative("value");
-                    newValue = (MonoBehaviour)EditorGUI.ObjectField(valueRect,
+                    MonoBehaviour newValue = (MonoBehaviour)EditorGUI.ObjectField(valueRect,
                                               interfaceValue.objectReferenceValue, typeof(MonoBehaviour), true);
 
                     if (EditorGUI.EndChangeCheck()) pendingObject = newValue;
 
-                    // Object Picker¿¡¼­ ¼±ÅÃÀÌ ³¡³µÀ» ¶§¸¸ Ã³¸®
+                    if (Event.current.commandName == "ObjectSelectorOpened") objectPickerActive = true;
+
+                    // Object Pickerì—ì„œ ì„ íƒì´ ëë‚¬ì„ ë•Œë§Œ ì²˜ë¦¬
                     if (Event.current.commandName == "ObjectSelectorClosed")
                     {
-                        AssignIfValid(pendingObject);
+                        objectPickerActive = false;
+                        AssignIfValid(pendingScriptable, ref interfaceValue);
                     }
 
-                    // µå·¡±× ¾Ø µå·Ó Ã³¸®
-                    if (interfaceValue.objectReferenceValue != newValue)
+                    // ë“œë˜ê·¸ ì•¤ ë“œë¡­ ì²˜ë¦¬
+                    if (!objectPickerActive && interfaceValue.objectReferenceValue != newValue)
                     {
-                        AssignIfValid(newValue);
-                    }
-
-                    void AssignIfValid(MonoBehaviour obj)
-                    {
-                        var requiredInterface = fieldInfo.FieldType.GenericTypeArguments[1].GenericTypeArguments[0];
-                        if (obj == null || obj.GetComponent(requiredInterface) != null)
-                        {
-                            interfaceValue.objectReferenceValue = obj;
-                        }
-                        else
-                        {
-                            Debug.LogWarning($"Assigned object must implement interface {requiredInterface.Name}");
-                        }
+                        AssignIfValid(newValue, ref interfaceValue);
                     }
                 }
 #endif
@@ -383,7 +434,7 @@ namespace Project.Tools.DictionaryHelp
         {
             SetupProps(prop);
 
-            // Á¶°Ç: dictionaryList À¯È¿ÇÏÁö ¾ÊÀ¸¸é Áß´Ü
+            // ì¡°ê±´: dictionaryList ìœ íš¨í•˜ì§€ ì•Šìœ¼ë©´ ì¤‘ë‹¨
             if (dictionaryList == null || dictionaryList.serializedObject == null)
                 return;
 
@@ -408,6 +459,8 @@ namespace Project.Tools.DictionaryHelp
         private SerializedProperty dividerPosProp;
 
         private MonoBehaviour pendingObject;
+        private ScriptableObject pendingScriptable;
+        private bool objectPickerActive = false;
     }
 }
 #endif
