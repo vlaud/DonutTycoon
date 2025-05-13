@@ -1,8 +1,8 @@
 #if UNITY_EDITOR
-using UnityEngine;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEditorInternal;
+using UnityEngine;
 
 namespace Project.Tools.DictionaryHelp
 {
@@ -174,6 +174,11 @@ namespace Project.Tools.DictionaryHelp
             return height;
         }
 
+        /// <summary>
+        /// 리스트 원소들의 높이를 구하는 함수
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
         private float GetListElementHeight(int index)
         {
             if (dictionaryList == null || index < 0 || index >= dictionaryList.arraySize)
@@ -187,7 +192,8 @@ namespace Project.Tools.DictionaryHelp
 
             float GetPropertyHeight(SerializedProperty prop)
             {
-                if (IsSingleLine(prop))
+                // 1개 단위거나 유니티 이벤트이면 원본의 높이 반환
+                if (IsSingleLine(prop) || prop.type.StartsWith("UnityEvent"))
                 {
                     return EditorGUI.GetPropertyHeight(prop);
                 }
@@ -207,6 +213,13 @@ namespace Project.Tools.DictionaryHelp
             return Mathf.Max(GetPropertyHeight(keyProp), GetPropertyHeight(valueProp));
         }
 
+        /// <summary>
+        /// 리스트 내의 원소들을 그리는 함수
+        /// </summary>
+        /// <param name="rect">사각형 트랜스폼</param>
+        /// <param name="index">인덱스</param>
+        /// <param name="isActive"></param>
+        /// <param name="isFocused"></param>
         void DrawListElement(Rect rect, int index, bool isActive, bool isFocused)
         {
             if (dictionaryList == null || index < 0 || index >= dictionaryList.arraySize)
@@ -225,12 +238,19 @@ namespace Project.Tools.DictionaryHelp
 
             void Draw(Rect rect, SerializedProperty prop)
             {
+                // 유니티 이벤트는 원본 그대로 그리기
                 if (prop.type.StartsWith("UnityEvent"))
                 {
                     EditorGUI.PropertyField(rect, prop, true);
                     return;
                 }
-
+                // TODO : UnityObjectWrapper 수정
+                if (prop.type.StartsWith("UnityObjectWrapper"))
+                {
+                    rect.height = EditorGUIUtility.singleLineHeight;
+                    EditorGUI.PropertyField(rect, prop, GUIContent.none);
+                    return;
+                }
                 if (IsSingleLine(prop))
                 {
                     rect.height = EditorGUIUtility.singleLineHeight;
@@ -316,15 +336,13 @@ namespace Project.Tools.DictionaryHelp
                     ScriptableObject newValue = (ScriptableObject)EditorGUI.ObjectField(keyRect,
                                                     scriptableValue.objectReferenceValue, typeof(ScriptableObject), true);
 
-                    if (EditorGUI.EndChangeCheck()) pendingScriptable = newValue;
-
                     if (Event.current.commandName == "ObjectSelectorOpened") objectPickerActive = true;
                     
                     // Object Picker에서 선택이 끝났을 때만 처리
                     if (Event.current.commandName == "ObjectSelectorClosed")
                     {
                         objectPickerActive = false;
-                        AssignIfValid(pendingScriptable, ref scriptableValue, true);
+                        AssignIfValid(null, ref scriptableValue, true);
                     }
                     
                     // 드래그 앤 드롭 처리
@@ -350,15 +368,13 @@ namespace Project.Tools.DictionaryHelp
                     MonoBehaviour newValue = (MonoBehaviour)EditorGUI.ObjectField(valueRect,
                                               interfaceValue.objectReferenceValue, typeof(MonoBehaviour), true);
 
-                    if (EditorGUI.EndChangeCheck()) pendingObject = newValue;
-
                     if (Event.current.commandName == "ObjectSelectorOpened") objectPickerActive = true;
 
                     // Object Picker에서 선택이 끝났을 때만 처리
                     if (Event.current.commandName == "ObjectSelectorClosed")
                     {
                         objectPickerActive = false;
-                        AssignIfValid(pendingScriptable, ref interfaceValue);
+                        AssignIfValid(null, ref interfaceValue);
                     }
 
                     // 드래그 앤 드롭 처리
@@ -425,8 +441,14 @@ namespace Project.Tools.DictionaryHelp
             }
         }
 
+        /// <summary>
+        /// 프로퍼티의 길이가 1개 단위인지 판별
+        /// </summary>
+        /// <param name="prop">프로퍼티</param>
+        /// <returns></returns>
         private bool IsSingleLine(SerializedProperty prop)
         {
+            // 프로퍼티의 타입이 제너릭이 아니거나, 자식 프로퍼티가 없음 => true 반환
             return prop.propertyType != SerializedPropertyType.Generic || prop.hasVisibleChildren == false;
         }
 
@@ -458,8 +480,6 @@ namespace Project.Tools.DictionaryHelp
         private SerializedProperty dictionaryList;
         private SerializedProperty dividerPosProp;
 
-        private MonoBehaviour pendingObject;
-        private ScriptableObject pendingScriptable;
         private bool objectPickerActive = false;
     }
 }
