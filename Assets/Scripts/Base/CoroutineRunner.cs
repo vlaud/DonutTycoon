@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// ¸ğµç ÄÚ·çÆ¾À» µ¹¸®´Â Å¬·¡½º
+/// ëª¨ë“  ì½”ë£¨í‹´ì„ ëŒë¦¬ëŠ” í´ë˜ìŠ¤
 /// </summary>
 public static class CoroutineRunner
 {

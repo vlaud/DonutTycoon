@@ -1,24 +1,22 @@
 using Project.Tools.DictionaryHelp;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
 public class DynamicEventListener : MonoBehaviour
 {
     [SerializeField]
-    private SerializableDictionary<GameEventEnum, List<UnityEvent<EventData>>> actionsOnListen =
-       new SerializableDictionary<GameEventEnum, List<UnityEvent<EventData>>>();
+    private SerializableDictionary<GameEventEnum, UnityEvent<EventData>> actionsOnListen =
+       new SerializableDictionary<GameEventEnum, UnityEvent<EventData>>();
 
-    public SerializableDictionary<GameEventEnum, List<UnityEvent<EventData>>> ActionsOnListen => actionsOnListen;
+    public SerializableDictionary<GameEventEnum, UnityEvent<EventData>> ActionsOnListen => actionsOnListen;
+
+    [SerializeField] UnityEvent<EventData> action;
 
     public void OnEvent(EventData data)
     {
-        if (actionsOnListen.TryGetValue(data.eventType, out List<UnityEvent<EventData>> events))
+        if (actionsOnListen.TryGetValue(data.eventType, out UnityEvent<EventData> events))
         {
-            foreach (var action in events)
-            {
-                action.Invoke(data);
-            }
+            events.Invoke(data);
         }
         else
         {

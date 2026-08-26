@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -6,13 +8,15 @@ public class CustomerPool : MonoBehaviour
     // The prefab for the customer
     [SerializeField] private Customer customerPrefab;
     // The pool of customers
-    public ObjectPool<Customer> customerPool;
+    private ObjectPool<Customer> customerPool;
 
     /// <summary>
-    /// ¼Õ´Ô ´ë±â¿­ °ü¸®ÀÚ
+    /// ì†ë‹˜ ëŒ€ê¸°ì—´ ê´€ë¦¬ì
     /// </summary>
     [SerializeField] private GetInLineManager getInLineManager;
     public GetInLineManager GetInLineManager => getInLineManager;
+    [SerializeField] List<Customer> customerList = new List<Customer>();
+    [SerializeField] private int customerCount = 0;
 
     private void Awake()
     {
@@ -29,37 +33,44 @@ public class CustomerPool : MonoBehaviour
     }
 
     /// <summary>
-    /// ÇÔ¼ö ¼³¸í: °í°´À» °¡Á®¿Ã ¶§ È£ÃâµË´Ï´Ù.
+    /// í•¨ìˆ˜ ì„¤ëª…: ê³ ê°ì„ ê°€ì ¸ì˜¬ ë•Œ í˜¸ì¶œë©ë‹ˆë‹¤.
     /// </summary>
     /// <param name="customer"></param>
     private void OnGetCustomer(Customer customer)
     {
-        // ¼Õ´Ô °ÔÀÓ ¿ÀºêÁ§Æ®¸¦ È°¼ºÈ­ÇÕ´Ï´Ù.
+        // ì†ë‹˜ ê²Œì„ ì˜¤ë¸Œì íŠ¸ë¥¼ í™œì„±í™”í•©ë‹ˆë‹¤.
         customer.gameObject.SetActive(true);
-        // ¼Õ´ÔÀ» ´ë±â¿­¿¡ Ãß°¡ÇÕ´Ï´Ù.
+        // ë¦¬ìŠ¤íŠ¸ì— ì†ë‹˜ì„ ì¶”ê°€í•©ë‹ˆë‹¤.
+        customerList.Add(customer);
+        // ì†ë‹˜ì„ ëŒ€ê¸°ì—´ì— ì¶”ê°€í•©ë‹ˆë‹¤.
         getInLineManager.AddCustomer(customer);
-        // ¼Õ´ÔÀÇ ´ë±â¿­ À§Ä¡¸¦ ¼³Á¤ÇÕ´Ï´Ù. GetIndexOfLastQueue´Â ´ë±â¿­ÀÇ ¸¶Áö¸· ÀÎµ¦½º¸¦ ³ªÅ¸³À´Ï´Ù.
+        // ì†ë‹˜ì˜ ëŒ€ê¸°ì—´ ìœ„ì¹˜ë¥¼ ì„¤ì •í•©ë‹ˆë‹¤. GetIndexOfLastQueueëŠ” ëŒ€ê¸°ì—´ì˜ ë§ˆì§€ë§‰ ì¸ë±ìŠ¤ë¥¼ ë‚˜íƒ€ëƒ…ë‹ˆë‹¤.
         int index = getInLineManager.GetIndexOfLastQueue();
-        customer.gameObject.name = "Customer_" + index;
         customer.SetMoveTargetAndIndex(getInLineManager.CustomerSpots[index], index);
+
+        string customerName = $"Customer_{customerCount}";
+        customer.transform.name = customer.IsReleased ? "Reused: " + customerName : customerName;
+        customerCount++;
     }
 
     /// <summary>
-    /// ÇÔ¼ö ¼³¸í: °í°´À» ¹İÈ¯ÇÒ ¶§ È£ÃâµË´Ï´Ù.
+    /// í•¨ìˆ˜ ì„¤ëª…: ê³ ê°ì„ ë°˜í™˜í•  ë•Œ í˜¸ì¶œë©ë‹ˆë‹¤.
     /// </summary>
     /// <param name="customer"></param>
     private void OnReleaseCustomer(Customer customer)
     {
         // Reset the customer
         customer.gameObject.SetActive(false);
-
+        customer.SetIsReleased(true);
         // Reset the customer's position
         customer.transform.SetParent(transform);
         customer.transform.position = Vector3.zero;
+        // ë¦¬ìŠ¤íŠ¸ì—ì„œ ì†ë‹˜ì„ ì œê±°í•©ë‹ˆë‹¤.
+        customerList.Remove(customer);
     }
 
     /// <summary>
-    /// ÇÔ¼ö ¼³¸í: °í°´À» ÆÄ±«ÇÒ ¶§ È£ÃâµË´Ï´Ù.
+    /// í•¨ìˆ˜ ì„¤ëª…: ê³ ê°ì„ íŒŒê´´í•  ë•Œ í˜¸ì¶œë©ë‹ˆë‹¤.
     /// </summary>
     /// <param name="customer"></param>
     private void OnDestroyCustomer(Customer customer)
@@ -69,20 +80,20 @@ public class CustomerPool : MonoBehaviour
     }
 
     /// <summary>
-    /// ÇÔ¼ö ¼³¸í: °í°´À» ½ºÆùÇÕ´Ï´Ù.
+    /// í•¨ìˆ˜ ì„¤ëª…: ê³ ê°ì„ ìŠ¤í°í•©ë‹ˆë‹¤.
     /// </summary>
     public void SpawnCustomer(Transform target)
     {
-        // Ç®¿¡¼­ °í°´À» °¡Á®¿É´Ï´Ù.
+        // í’€ì—ì„œ ê³ ê°ì„ ê°€ì ¸ì˜µë‹ˆë‹¤.
         Customer customer = customerPool.Get();
-        // ¼Õ´ÔÀÇ ½ºÆù À§Ä¡¸¦ ¼³Á¤ÇÕ´Ï´Ù.
+        // ì†ë‹˜ì˜ ìŠ¤í° ìœ„ì¹˜ë¥¼ ì„¤ì •í•©ë‹ˆë‹¤.
         customer.transform.position = target.position;
-        customer.SetCustomerInfo($"{getInLineManager.GetIndexOfLastQueue()}¹ø ¼Õ´ÔÀÔ´Ï´Ù.");
+        customer.SetCustomerInfo($"{getInLineManager.GetIndexOfLastQueue()}ë²ˆ ì†ë‹˜ì…ë‹ˆë‹¤.");
         customer.ChangeState(CustomerState.Enter);
     }
 
     /// <summary>
-    /// ÇÔ¼ö ¼³¸í: °í°´À» ¹İÈ¯ÇÕ´Ï´Ù.
+    /// í•¨ìˆ˜ ì„¤ëª…: ê³ ê°ì„ ë°˜í™˜í•©ë‹ˆë‹¤.
     /// </summary>
     /// <param name="customer"></param>
     public void RemoveCustomer(Customer customer)
@@ -95,5 +106,14 @@ public class CustomerPool : MonoBehaviour
     {
         // Check if the customer pool is full
         return getInLineManager.CustomerQueue.Count >= getInLineManager.CustomerSpots.Length;
+    }
+
+    public void RemoveAllCustomers()
+    {
+        // ë¦¬ìŠ¤íŠ¸ì— ìˆëŠ” ëª¨ë“  ì†ë‹˜ì„ ì œê±°í•©ë‹ˆë‹¤.
+        for (int i = customerList.Count - 1; i >= 0; i--)
+        {
+            customerPool.Release(customerList[i]);
+        }
     }
 }

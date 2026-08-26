@@ -35,3 +35,10 @@ public class TempCustomer : MonoBehaviour
 
     }
 }
+
+public enum CustomerEventEnum
+{
+    None,
+    Spawn,
+    Release,
+}

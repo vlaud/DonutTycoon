@@ -3,67 +3,67 @@ using System.Collections.Generic;
 using System.Linq;
 
 /// <summary>
-/// ¼Õ´ÔÀÇ ´ë±â¿­À» °ü¸®ÇÏ´Â Å¬·¡½ºÀÔ´Ï´Ù.
+/// ì†ë‹˜ì˜ ëŒ€ê¸°ì—´ì„ ê´€ë¦¬í•˜ëŠ” í´ë˜ìŠ¤ì…ë‹ˆë‹¤.
 /// </summary>
 public class GetInLineManager : MonoBehaviour
 {
     /// <summary>
-    /// ¼Õ´ÔÀÌ ´ë±âÇÏ´Â À§Ä¡¸¦ °®°íÀÖ´Â ºÎ¸ğ Æ®·£½ºÆûÀÔ´Ï´Ù.
+    /// ì†ë‹˜ì´ ëŒ€ê¸°í•˜ëŠ” ìœ„ì¹˜ë¥¼ ê°–ê³ ìˆëŠ” ë¶€ëª¨ íŠ¸ëœìŠ¤í¼ì…ë‹ˆë‹¤.
     /// </summary>
     [SerializeField] private Transform customerLineParent;
     /// <summary>
-    /// ¼Õ´ÔÀÌ ´ë±âÇÏ´Â À§Ä¡¸¦ ³ªÅ¸³»´Â ¹è¿­ÀÔ´Ï´Ù.
+    /// ì†ë‹˜ì´ ëŒ€ê¸°í•˜ëŠ” ìœ„ì¹˜ë¥¼ ë‚˜íƒ€ë‚´ëŠ” ë°°ì—´ì…ë‹ˆë‹¤.
     /// </summary>
     [SerializeField] private Transform[] customerSpots;
     /// <summary>
-    /// ¼Õ´ÔÀÌ ´ë±âÇÏ´Â À§Ä¡¸¦ °¡Á®¿À´Â ¼Ó¼ºÀÔ´Ï´Ù.
+    /// ì†ë‹˜ì´ ëŒ€ê¸°í•˜ëŠ” ìœ„ì¹˜ë¥¼ ê°€ì ¸ì˜¤ëŠ” ì†ì„±ì…ë‹ˆë‹¤.
     /// </summary>
     public Transform[] CustomerSpots => customerSpots;
     /// <summary>
-    /// ¼Õ´ÔÀÇ Å¥¸¦ ³ªÅ¸³»´Â Å¥ÀÔ´Ï´Ù.
+    /// ì†ë‹˜ì˜ íë¥¼ ë‚˜íƒ€ë‚´ëŠ” íì…ë‹ˆë‹¤.
     /// </summary>
     private Queue<Customer> customerQueue = new Queue<Customer>();
     public Queue<Customer> CustomerQueue { get => customerQueue; private set => customerQueue = value; }
 
     private void Awake()
     {
-        // customerLineParent°¡ °¡Áø ¸ğµç ÀÚ½Ä Æ®·£½ºÆûÀ» °¡Á®¿É´Ï´Ù. Where(t => t != customerLineParent)´Â customerLineParent¸¦ Á¦¿ÜÇÑ ¸ğµç ÀÚ½Ä Æ®·£½ºÆûÀ» ÇÊÅÍ¸µÇÕ´Ï´Ù.
+        // customerLineParentê°€ ê°€ì§„ ëª¨ë“  ìì‹ íŠ¸ëœìŠ¤í¼ì„ ê°€ì ¸ì˜µë‹ˆë‹¤. Where(t => t != customerLineParent)ëŠ” customerLineParentë¥¼ ì œì™¸í•œ ëª¨ë“  ìì‹ íŠ¸ëœìŠ¤í¼ì„ í•„í„°ë§í•©ë‹ˆë‹¤.
         customerSpots = customerLineParent.GetComponentsInChildren<Transform>().Where(t => t != customerLineParent).ToArray();
     }
 
     public int GetIndexOfLastQueue()
     {
-        // ´ë±â¿­ÀÇ ¸¶Áö¸· ÀÎµ¦½º¸¦ ¹İÈ¯ÇÕ´Ï´Ù.
+        // ëŒ€ê¸°ì—´ì˜ ë§ˆì§€ë§‰ ì¸ë±ìŠ¤ë¥¼ ë°˜í™˜í•©ë‹ˆë‹¤.
         return customerQueue.Count - 1;
     }
 
     public void AddCustomer(Customer customer)
     {
-        // ¼Õ´ÔÀ» Å¥¿¡ Ãß°¡ÇÕ´Ï´Ù.
+        // ì†ë‹˜ì„ íì— ì¶”ê°€í•©ë‹ˆë‹¤.
         customerQueue.Enqueue(customer);
     }
 
     /// <summary>
-    /// ¼Õ´ÔÀ» Å¥¿¡¼­ Á¦°ÅÇÕ´Ï´Ù.
+    /// ì†ë‹˜ì„ íì—ì„œ ì œê±°í•©ë‹ˆë‹¤.
     /// </summary>
     /// <param name="customer"></param>
     public void RemoveCustomer(Customer customer)
     {
-        // ¼Õ´ÔÀ» Å¥¿¡¼­ Á¦°ÅÇÕ´Ï´Ù.
+        // ì†ë‹˜ì„ íì—ì„œ ì œê±°í•©ë‹ˆë‹¤.
         customerQueue.Dequeue();
-        // ¼Õ´ÔÀÇ À§Ä¡¸¦ ¾÷µ¥ÀÌÆ®ÇÕ´Ï´Ù.
+        // ì†ë‹˜ì˜ ìœ„ì¹˜ë¥¼ ì—…ë°ì´íŠ¸í•©ë‹ˆë‹¤.
         UpdateCustomerPositions();
     }
 
     /// <summary>
-    /// ¸ğµç ¼Õ´ÔÀÇ À§Ä¡¸¦ ºñ¾îÀÖ´Â ¾ÕÂÊÀ¸·Î ÀÌµ¿½ÃÅµ´Ï´Ù.
+    /// ëª¨ë“  ì†ë‹˜ì˜ ìœ„ì¹˜ë¥¼ ë¹„ì–´ìˆëŠ” ì•ìª½ìœ¼ë¡œ ì´ë™ì‹œí‚µë‹ˆë‹¤.
     /// </summary>
     void UpdateCustomerPositions()
     {
         int i = 0;
         foreach (Customer customer in customerQueue)
         {
-            // ¼Õ´ÔÀÇ À§Ä¡¸¦ ¾÷µ¥ÀÌÆ®ÇÕ´Ï´Ù.
+            // ì†ë‹˜ì˜ ìœ„ì¹˜ë¥¼ ì—…ë°ì´íŠ¸í•©ë‹ˆë‹¤.
             customer.SetMoveTargetAndIndex(customerSpots[i], i);
 
             var telegram = new Telegram();

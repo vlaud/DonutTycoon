@@ -3,17 +3,17 @@ using UnityEngine;
 public class ScoreManager : MonoBehaviour
 {
     /// <summary>
-    /// ÇöÀç Á¡¼ö
+    /// í˜„ì¬ ì ìˆ˜
     /// </summary>
     [SerializeField] private int currentScore = 0;
 
     /// <summary>
-    /// ¾÷±×·¹ÀÌµå ½Ã ¼Õ´Ô Á¡¼ö Áõ°¡·®
+    /// ì—…ê·¸ë ˆì´ë“œ ì‹œ ì†ë‹˜ ì ìˆ˜ ì¦ê°€ëŸ‰
     /// </summary>
     [SerializeField] private int upgradeScore = 1;
 
     /// <summary>
-    /// ´ÙÀ½ ¾÷±×·¹ÀÌµå¸¦ À§ÇØ ÇÊ¿äÇÑ Á¡¼ö
+    /// ë‹¤ìŒ ì—…ê·¸ë ˆì´ë“œë¥¼ ìœ„í•´ í•„ìš”í•œ ì ìˆ˜
     /// </summary>
     [SerializeField] private int requiredUpgradeScore = 10;
 
@@ -29,7 +29,7 @@ public class ScoreManager : MonoBehaviour
     }
 
     /// <summary>
-    /// * Á¡¼ö Áõ°¡ * ¼Õ´ÔÀ» ¹ŞÀ» ¶§¸¶´Ù Á¡¼ö¸¦ Áõ°¡½ÃÅ´
+    /// * ì ìˆ˜ ì¦ê°€ * ì†ë‹˜ì„ ë°›ì„ ë•Œë§ˆë‹¤ ì ìˆ˜ë¥¼ ì¦ê°€ì‹œí‚´
     /// 
     /// </summary>
     public void AddScore()
@@ -39,15 +39,15 @@ public class ScoreManager : MonoBehaviour
     }
 
     /// <summary>
-    /// * Á¡¼ö ¾÷±×·¹ÀÌµå * ¾÷±×·¹ÀÌµå ½Ã ¼Õ´Ô Á¡¼ö¸¦ Áõ°¡½ÃÅ´
+    /// * ì ìˆ˜ ì—…ê·¸ë ˆì´ë“œ * ì—…ê·¸ë ˆì´ë“œ ì‹œ ì†ë‹˜ ì ìˆ˜ë¥¼ ì¦ê°€ì‹œí‚´
     /// </summary>
     public void UpgradeScore()
     {
-        if (currentScore < requiredUpgradeScore) return; // ¾÷±×·¹ÀÌµå¿¡ ÇÊ¿äÇÑ Á¡¼ö°¡ ºÎÁ·ÇÏ¸é ¸®ÅÏ
+        if (currentScore < requiredUpgradeScore) return; // ì—…ê·¸ë ˆì´ë“œì— í•„ìš”í•œ ì ìˆ˜ê°€ ë¶€ì¡±í•˜ë©´ ë¦¬í„´
 
-        currentScore -= requiredUpgradeScore; // Á¡¼ö Â÷°¨
-        upgradeScore += 1; // ¼Õ´Ô Á¡¼ö Áõ°¡·® Áõ°¡
-        requiredUpgradeScore += 10; // ´ÙÀ½ ¾÷±×·¹ÀÌµå¿¡ ÇÊ¿äÇÑ Á¡¼ö Áõ°¡
+        currentScore -= requiredUpgradeScore; // ì ìˆ˜ ì°¨ê°
+        upgradeScore += 1; // ì†ë‹˜ ì ìˆ˜ ì¦ê°€ëŸ‰ ì¦ê°€
+        requiredUpgradeScore += 10; // ë‹¤ìŒ ì—…ê·¸ë ˆì´ë“œì— í•„ìš”í•œ ì ìˆ˜ ì¦ê°€
         
         UpdateTexts();
     }
@@ -60,7 +60,7 @@ public class ScoreManager : MonoBehaviour
     }
 
     /// <summary>
-    ///  Á¡¼ö UI ¾÷µ¥ÀÌÆ®
+    ///  ì ìˆ˜ UI ì—…ë°ì´íŠ¸
     /// </summary>
     private void UpdateScoreText()
     {

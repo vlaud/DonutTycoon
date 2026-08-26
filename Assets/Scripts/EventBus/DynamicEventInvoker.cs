@@ -1,31 +1,32 @@
 using Project.Tools.DictionaryHelp;
-using System.Collections.Generic;
+using ProjectTools;
 using UnityEngine;
 using UnityEngine.Events;
 
 public class DynamicEventInvoker : MonoBehaviour
 {
-    [Header("ÀÌº¥Æ® ÀÎº¸Ä¿")]
-    [Tooltip("ÀÌº¥Æ®¸¦ ¹ßÇàÇÒ ¶§ È£ÃâÇÒ ¾×¼ÇÀ» µî·ÏÇÕ´Ï´Ù. ÀÌº¥Æ® Å¸ÀÔ¿¡ µû¶ó ´Ù¸£°Ô ¼³Á¤ÇÒ ¼ö ÀÖ½À´Ï´Ù.")]
+    [Header("ì´ë²¤íŠ¸ íƒ€ì… - ì„œë¸Œíƒ€ì… ë§¤í•‘")]
+    [Tooltip("ì´ë²¤íŠ¸ë¥¼ ë°œí–‰í•  ë•Œ í˜¸ì¶œí•  ì•¡ì…˜ì„ ë“±ë¡í•©ë‹ˆë‹¤. ì´ë²¤íŠ¸ íƒ€ì…ì— ë”°ë¼ ë‹¤ë¥´ê²Œ ì„¤ì •í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.")]
     [SerializeField]
-    private SerializableDictionary<GameEventEnum, List<UnityEvent<EventData>>> actionsOnInvoke =
-        new SerializableDictionary<GameEventEnum, List<UnityEvent<EventData>>>();
+    private SerializableDictionary<GameEventEnum, UnityEvent<EventData>> actionsOnInvoke =
+        new SerializableDictionary<GameEventEnum, UnityEvent<EventData>>();
 
+    [Header("ì„œë¸Œíƒ€ì… - ì´ë²¤íŠ¸ ì•¡ì…˜ ë§¤í•‘")]
+    [SerializeField]
+    private SerializableDictionary<UnityObjectWrapper<EventTypeSelector>, UnityEvent<EventData>> actions = new();
     /// <summary>
-    /// ÀÌº¥Æ®¸¦ ¹ßÇàÇÏ´Â ¸Ş¼­µåÀÔ´Ï´Ù.
+    /// ì´ë²¤íŠ¸ë¥¼ ë°œí–‰í•˜ëŠ” ë©”ì„œë“œì…ë‹ˆë‹¤.
     /// </summary>
-    /// <param name="data">ÀÌº¥Æ® µ¥ÀÌÅÍ Å¬·¡½º</param>
+    /// <param name="data">ì´ë²¤íŠ¸ ë°ì´í„° í´ë˜ìŠ¤</param>
     public void Publish(EventData data)
     {
-        // actionsOnInvoke ³»ºÎ¿¡¼­ dataÀÇ eventTypeÀ» »ç¿ëÇÏ¿© ¸Â´Â ¾×¼ÇÀ» Ã£½À´Ï´Ù.
-        if (actionsOnInvoke.TryGetValue(data.eventType, out List<UnityEvent<EventData>> events))
+        // actionsOnInvoke ë‚´ë¶€ì—ì„œ dataì˜ eventTypeì„ ì‚¬ìš©í•˜ì—¬ ë§ëŠ” ì•¡ì…˜ì„ ì°¾ìŠµë‹ˆë‹¤.
+        if (actionsOnInvoke.TryGetValue(data.eventType, out UnityEvent<EventData> events))
         {
-            // µî·ÏµÈ ¾×¼ÇÀ» È£ÃâÇÕ´Ï´Ù.
-            foreach (var action in events)
-            {
-                action.Invoke(data);
-            }
-            // ±× ÈÄ ÀÌº¥Æ®¹ö½º¿¡¼­ ¹ßÇàÇÕ´Ï´Ù.
+            // ë“±ë¡ëœ ì•¡ì…˜ì„ í˜¸ì¶œí•©ë‹ˆë‹¤.
+            events.Invoke(data);
+
+            // ê·¸ í›„ ì´ë²¤íŠ¸ë²„ìŠ¤ì—ì„œ ë°œí–‰í•©ë‹ˆë‹¤.
             EventBusManager.Publish(data);
         }
         else

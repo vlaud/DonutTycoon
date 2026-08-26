@@ -11,38 +11,28 @@ public enum SpawnerLoop
 public class CustomerSpawner : MonoBehaviour
 {
     [SerializeField] private CustomerPool customerPool;
-    [SerializeField] private float remaining = 20f;
+    private float remaining = 2f;
     [SerializeField] private Vector2 spawnRange = new Vector2(2f, 5f);
-    CoroutineRunner coroutineRunner;
     private Dictionary<SpawnerLoop, Coroutine> coroutineDictionary = new Dictionary<SpawnerLoop, Coroutine>();
     [SerializeField] private Transform dismissPos;
     public Transform Dismisspos => dismissPos;
 
-    private void Awake()
-    {
-        coroutineRunner = new CoroutineRunner(this);
-    }
-
     private void Start()
     {
-        // Initialize the coroutine dictionary
-        coroutineDictionary[SpawnerLoop.SpwanCustomerLoop] = null;
-        // Start the customer spawn loop
-        coroutineRunner.StartCurrentCoroutine(coroutineDictionary[SpawnerLoop.SpwanCustomerLoop], out Coroutine currentCoroutine, SpwanCustomerLoop());
-        coroutineDictionary[SpawnerLoop.SpwanCustomerLoop] = currentCoroutine;
+        this.StartManagedCoroutine(ref coroutineDictionary, SpawnerLoop.SpwanCustomerLoop, SpwanCustomerLoop());
     }
 
     IEnumerator SpwanCustomerLoop()
     {
         while (true)
         {
-            // º’¥‘¿Ã ≤À ¬˜¿÷¿∏∏È Ω∫∆˘ ¿œΩ√¡§¡ˆ
+            // ÏÜêÎãòÏù¥ ÍΩâ Ï∞®ÏûàÏúºÎ©¥ Ïä§Ìè∞ ÏùºÏãúÏ†ïÏßÄ
             while (customerPool.IsCustomerFull())
             {
                 yield return null;
             }
 
-            // Ω∫∆˘ ¥Î±‚Ω√∞£¿ª ∑£¥˝¿∏∑Œ º≥¡§
+            // Ïä§Ìè∞ ÎåÄÍ∏∞ÏãúÍ∞ÑÏùÑ ÎûúÎç§ÏúºÎ°ú ÏÑ§Ï†ï
             remaining = Random.Range(spawnRange.x, spawnRange.y);
 
             while (remaining > Mathf.Epsilon)
@@ -51,7 +41,7 @@ public class CustomerSpawner : MonoBehaviour
                 yield return null;
             }
 
-            // º’¥‘ Ω∫∆˘
+            // ÏÜêÎãò Ïä§Ìè∞
             customerPool.SpawnCustomer(transform);
         }
     }
@@ -59,5 +49,16 @@ public class CustomerSpawner : MonoBehaviour
     public void RemoveCustomer(Customer customer)
     {
         customerPool.RemoveCustomer(customer);
+    }
+
+    public void RemoveAllCustomers()
+    {
+        customerPool.RemoveAllCustomers();
+    }
+
+    public void StopAllCoroutinesOnGameOver()
+    {
+        RemoveAllCustomers();
+        StopAllCoroutines();
     }
 }

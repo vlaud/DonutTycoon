@@ -11,52 +11,55 @@ public enum CustomerState
     Move,
 }
 
-public class Customer : MonoBehaviour
+public class Customer : MonoBehaviour, iTimerObserver
 {
     // The state machine for the customer
     private StateMachine stateMachine;
     public StateMachine CustomerStateMachine => stateMachine;
 
-    [Header("¼Õ´Ô »óÅÂ")]
+    [Header("ì†ë‹˜ ìƒíƒœ")]
     private Dictionary<CustomerState, iState> stateDictionary = new Dictionary<CustomerState, iState>();
     private Dictionary<CustomerState, CustomerState> stateTransitionDictionary = new Dictionary<CustomerState, CustomerState>();
-    [Tooltip("¼Õ´Ô »óÅÂ")]
+    [Tooltip("ì†ë‹˜ ìƒíƒœ")]
     [SerializeField] private CustomerState currentState;
     public CustomerState CurrentState => currentState;
     [SerializeField] private CustomerState globalState;
     public CustomerState GlobalState => globalState;
 
-    [Tooltip("¼Õ´Ô ¼Óµµ")]
+    [Tooltip("ì†ë‹˜ ì†ë„")]
     public float speed = 5f;
 
-    [Tooltip("¼Õ´Ô ÀÌµ¿ ¸ñÇ¥")]
+    [Tooltip("ì†ë‹˜ ì´ë™ ëª©í‘œ")]
     [SerializeField] private Transform moveTarget;
     public Transform MoveTarget => moveTarget;
     [SerializeField] private int targetIndex = 0;
     public int TargetIndex => targetIndex;
 
-    [Header("ÀÌº¥Æ® °ü¸®")]
-    [Tooltip("¼Õ´Ô ÀÌº¥Æ®")]
-    [SerializeField] private EventBinding eventBinding;
-
-    [SerializeField] private string customerInfo = "¼Õ´Ô Á¤º¸";
+    [Header("ì´ë²¤íŠ¸ ê´€ë¦¬")]
+    [Tooltip("ì†ë‹˜ ì´ë²¤íŠ¸")]
+    [SerializeField] private string customerInfo = "ë”¸ê¸° ì£¼ì„¸ìš”";
+    [SerializeField] private TimerUI timerUI;
     public string CustomerInfo => customerInfo;
 
     private bool isClicked;
     /// <summary>
-    /// ¼Õ´Ô Å¬¸¯ ¿©ºÎ
+    /// ì†ë‹˜ í´ë¦­ ì—¬ë¶€
     /// </summary>
     public bool IsClicked => isClicked;
 
+    private bool isReleased = false;
+    public bool IsReleased => isReleased;
+
+    private bool isTimerReserved = false;
+    public bool IsTimerReserved => isTimerReserved;
+
     private void OnEnable()
     {
-        // eventBinding¾ÈÀÇ ¸ğµç EventsOnListenµéÀ» µî·Ï
-        eventBinding.EventsOnListen[GameEventEnum.TimerEvent]?.Register(OnTimerEvent);
+        // eventBindingì•ˆì˜ ëª¨ë“  EventsOnListenë“¤ì„ ë“±ë¡
     }
     private void OnDisable()
     {
-        // eventBinding¾ÈÀÇ ¸ğµç EventsOnListenµéÀ» µî·Ï
-        eventBinding.EventsOnListen[GameEventEnum.TimerEvent]?.Unregister(OnTimerEvent);
+        // eventBindingì•ˆì˜ ëª¨ë“  EventsOnListenë“¤ì„ ë“±ë¡
     }
 
     private void Awake()
@@ -116,7 +119,6 @@ public class Customer : MonoBehaviour
     public void TriggerCustomerEvent()
     {
         // Trigger the customer event
-        eventBinding.EventOnInvoke[GameEventEnum.CustomerEvent]?.Raise();
     }
 
     private void OnTimerEvent()
@@ -168,10 +170,8 @@ public class Customer : MonoBehaviour
         bool isMoving = Vector3.Distance(transform.position, moveTarget.position) >= 0.1f;
         if (!isMoving)
         {
-            Debug.Log("sending message to state machine");
             var telegram = new Telegram();
             telegram.SetNextState(stateTransitionDictionary[currentState]);
-            Debug.Log($"Customer change State to: {stateTransitionDictionary[currentState]}");
             HandleMessage(telegram);
         }
         return isMoving;
@@ -180,5 +180,38 @@ public class Customer : MonoBehaviour
     public void HandleMessage(Telegram telegram)
     {
         stateMachine.HandleMessage(telegram);
+    }
+
+    public void OnTimerFinished()
+    {
+        var telegram = new Telegram();
+        telegram.SetNextState(CustomerState.Leave);
+        timerUI = null;
+        HandleMessage(telegram);
+    }
+
+    public Transform GetTransform()
+    {
+        return transform;
+    }
+
+    public TimerUI GetTimerUI()
+    {
+        return timerUI;
+    }
+
+    public void SetTimerUI(TimerUI ui)
+    {
+        timerUI = ui;
+    }
+
+    public void SetIsReleased(bool isReleased)
+    {
+        this.isReleased = isReleased;
+    }
+
+    public void SetIsTimerReserved(bool isTimerReserved)
+    {
+        this.isTimerReserved = isTimerReserved;
     }
 }

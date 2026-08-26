@@ -1,57 +1,99 @@
 using Project.Tools.DictionaryHelp;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using UnityEngine;
 
 public class EventBusManager : MonoBehaviour
 {
     /// <summary>
-    /// ½Ì±ÛÅæ ÀÎ½ºÅÏ½º
+    /// ì‹±ê¸€í†¤ ì¸ìŠ¤í„´ìŠ¤
     /// </summary>
     private static EventBusManager _instance;
 
     /// <summary>
-    /// ½Ì±ÛÅæ ÀÎ½ºÅÏ½º¸¦ °¡Á®¿À´Â ÇÁ·ÎÆÛÆ¼
+    /// ì‹±ê¸€í†¤ ì¸ìŠ¤í„´ìŠ¤ë¥¼ ê°€ì ¸ì˜¤ëŠ” í”„ë¡œí¼í‹°
     /// </summary>
-    public static EventBusManager Instance => _instance;
+    public static EventBusManager Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                var go = new GameObject("EventBusManager");
+                _instance = go.AddComponent<EventBusManager>();
+                DontDestroyOnLoad(go);
+            }
+            return _instance;
+        }
+    }
 
-    [Tooltip("ÀÌº¥Æ® ¹ö½º¿¡ µî·ÏÇÒ DynamicEventListener¸¦ GameEventEnum Å¸ÀÔº°·Î ¸®½ºÆ®·Î °ü¸®ÇÕ´Ï´Ù.")]
+    [Tooltip("ì´ë²¤íŠ¸ ë²„ìŠ¤ì— ë“±ë¡í•  DynamicEventListenerë¥¼ GameEventEnum íƒ€ì…ë³„ë¡œ ë¦¬ìŠ¤íŠ¸ë¡œ ê´€ë¦¬í•©ë‹ˆë‹¤.")]
     [SerializeField]
     private SerializableDictionary<GameEventEnum, List<DynamicEventListener>> _subscribersList
        = new SerializableDictionary<GameEventEnum, List<DynamicEventListener>>();
 
+    private Dictionary<Type, Dictionary<Enum, List<Action<EventData>>>> eventHandlers = new();
+    private List<IEventSubscriber> subscribers = new();
+
     private void Awake()
     {
-        if (_instance == null)
-        {
-            _instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
+        if (_instance != null && _instance != this)
         {
             Destroy(gameObject);
+            return;
         }
+        _instance = this;
+        DontDestroyOnLoad(gameObject);
+        
+        RegisterAllSubscribers();
+    }
 
-        // ¸ğµç DynamicEventListenerµéÀ» Ã£¾Æ¼­ ActionsÀÇ ÀÌº¥Æ® Å¸ÀÔÀ¸·Î ±×·ìÈ­
-        FindAllAndSubscribe();
+    private void RegisterAllSubscribers()
+    {
+        var subscribers = GetTypeofGeneric<IEventSubscriber>.FindAllImplementing();
+        
+        foreach (var subscriber in subscribers)
+        {
+            var type = subscriber.GetType();
+            var attribute = type.GetCustomAttribute<AutoEventSubscriber>();
+            if (attribute != null)
+            {
+                RegisterSubscriber(subscriber, attribute.EventEnumType);
+            }
+        }
+    }
+
+    private void RegisterSubscriber(IEventSubscriber subscriber, Type eventEnumType)
+    {
+        subscribers.Add(subscriber);
+        subscriber.Subscribe();
     }
 
     private void OnDestroy()
     {
+        foreach (var subscriber in subscribers)
+        {
+            subscriber.Unsubscribe();
+        }
+        subscribers.Clear();
+        eventHandlers.Clear();
         UnsubscribeAll();
     }
 
     /// <summary>
-    /// ¸ğµç DynamicEventListenerµéÀ» Ã£¾Æ¼­ ActionsÀÇ ÀÌº¥Æ® Å¸ÀÔÀ¸·Î ±×·ìÈ­ÇÏ´Â ¸Ş¼­µå
+    /// ëª¨ë“  DynamicEventListenerë“¤ì„ ì°¾ì•„ì„œ Actionsì˜ ì´ë²¤íŠ¸ íƒ€ì…ìœ¼ë¡œ ê·¸ë£¹í™”í•˜ëŠ” ë©”ì„œë“œ
     /// </summary>
     private static void FindAllAndSubscribe()
     {
-        // ¸ğµç DynamicEventListenerµéÀ» Ã£¾Æ¼­ ActionsÀÇ ÀÌº¥Æ® Å¸ÀÔÀ¸·Î ±×·ìÈ­
+        // ëª¨ë“  DynamicEventListenerë“¤ì„ ì°¾ì•„ì„œ Actionsì˜ ì´ë²¤íŠ¸ íƒ€ì…ìœ¼ë¡œ ê·¸ë£¹í™”
         var allListeners = GetTypeofGeneric<DynamicEventListener>.FindAllImplementing();
 
-        // allListeners ¸®½ºÆ®¸¦ ¼øÈ¸ÇÏ¸ç °¢ ¸®½º³ÊµéÀ» ºÒ·¯¿È
+        // allListeners ë¦¬ìŠ¤íŠ¸ë¥¼ ìˆœíšŒí•˜ë©° ê° ë¦¬ìŠ¤ë„ˆë“¤ì„ ë¶ˆëŸ¬ì˜´
         foreach (var listener in allListeners)
         {
-            // °¢ ¸®½º³ÊÀÇ ActionsOnListenÀÇ Å°¸¦ °¡Á®¿Í¼­ ¸®½º³Ê¸¦ ±¸µ¶ÇÔ
+            // ê° ë¦¬ìŠ¤ë„ˆì˜ ActionsOnListenì˜ í‚¤ë¥¼ ê°€ì ¸ì™€ì„œ ë¦¬ìŠ¤ë„ˆë¥¼ êµ¬ë…í•¨
             foreach (var action in listener.ActionsOnListen)
             {
                 Subscribe(action.Key, listener);
@@ -60,11 +102,11 @@ public class EventBusManager : MonoBehaviour
     }
 
     /// <summary>
-    /// µñ¼Å³Ê¸®ÀÇ ¸ğµç ¸®½º³Ê¸¦ ±¸µ¶ Ãë¼ÒÇÏ´Â ¸Ş¼­µå
+    /// ë”•ì…”ë„ˆë¦¬ì˜ ëª¨ë“  ë¦¬ìŠ¤ë„ˆë¥¼ êµ¬ë… ì·¨ì†Œí•˜ëŠ” ë©”ì„œë“œ
     /// </summary>
     private static void UnsubscribeAll()
     {
-        // _subscribersList ³»ºÎÀÇ pairs¸¦ ¼øÈ¸ÇÏ¸ç °¢ ¸®½º³ÊµéÀ» ±¸µ¶ Ãë¼ÒÇÔ
+        // _subscribersList ë‚´ë¶€ì˜ pairsë¥¼ ìˆœíšŒí•˜ë©° ê° ë¦¬ìŠ¤ë„ˆë“¤ì„ êµ¬ë… ì·¨ì†Œí•¨
         foreach (var kvp in Instance._subscribersList)
         {
             kvp.Value.Clear();
@@ -74,19 +116,19 @@ public class EventBusManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ÀÌº¥Æ®¸¦ ±¸µ¶ÇÏ´Â ¸Ş¼­µå
+    /// ì´ë²¤íŠ¸ë¥¼ êµ¬ë…í•˜ëŠ” ë©”ì„œë“œ
     /// </summary>
-    /// <param name="eventType">ÀÌº¥Æ® Å¸ÀÔ</param>
-    /// <param name="listener">¸®½º³Ê</param>
+    /// <param name="eventType">ì´ë²¤íŠ¸ íƒ€ì…</param>
+    /// <param name="listener">ë¦¬ìŠ¤ë„ˆ</param>
     public static void Subscribe(GameEventEnum eventType, DynamicEventListener listener)
     {
-        // _subscribersList¿¡ ÇØ´ç ÀÌº¥Æ® Å¸ÀÔÀÌ ¾øÀ¸¸é Ãß°¡
+        // _subscribersListì— í•´ë‹¹ ì´ë²¤íŠ¸ íƒ€ì…ì´ ì—†ìœ¼ë©´ ì¶”ê°€
         if (!Instance._subscribersList.ContainsKey(eventType))
         {
             Instance._subscribersList.Add(eventType, new List<DynamicEventListener>());
         }
 
-        // ¸®½º³Ê°¡ ±¸µ¶µÇ¾î ÀÖÁö ¾ÊÀ¸¸é Ãß°¡
+        // ë¦¬ìŠ¤ë„ˆê°€ êµ¬ë…ë˜ì–´ ìˆì§€ ì•Šìœ¼ë©´ ì¶”ê°€
         if (!Instance._subscribersList[eventType].Contains(listener))
         {
             Instance._subscribersList[eventType].Add(listener);
@@ -94,19 +136,19 @@ public class EventBusManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ÀÌº¥Æ® ±¸µ¶ Ãë¼Ò ¸Ş¼­µå
+    /// ì´ë²¤íŠ¸ êµ¬ë… ì·¨ì†Œ ë©”ì„œë“œ
     /// </summary>
-    /// <param name="eventType">ÀÌº¥Æ® Å¸ÀÔ</param>
-    /// <param name="listener">¸®½º³Ê</param>
+    /// <param name="eventType">ì´ë²¤íŠ¸ íƒ€ì…</param>
+    /// <param name="listener">ë¦¬ìŠ¤ë„ˆ</param>
     public static void Unsubscribe(GameEventEnum eventType, DynamicEventListener listener)
     {
-        // _subscribersList¿¡ ÇØ´ç ÀÌº¥Æ® Å¸ÀÔÀÌ ¾øÀ¸¸é ¸®ÅÏ
+        // _subscribersListì— í•´ë‹¹ ì´ë²¤íŠ¸ íƒ€ì…ì´ ì—†ìœ¼ë©´ ë¦¬í„´
         if (!Instance._subscribersList.ContainsKey(eventType)) return;
 
-        // ÇØ´ç ÀÌº¥Æ® Å¸ÀÔÀÇ ¸®½º³Ê ¸®½ºÆ®¸¦ °¡Á®¿È
+        // í•´ë‹¹ ì´ë²¤íŠ¸ íƒ€ì…ì˜ ë¦¬ìŠ¤ë„ˆ ë¦¬ìŠ¤íŠ¸ë¥¼ ê°€ì ¸ì˜´
         List<DynamicEventListener> subscribers = Instance._subscribersList[eventType];
 
-        // ¿ª¼øÀ¸·Î ¹İº¹ÇÏ¿© ¸®½º³Ê¸¦ Á¦°Å
+        // ì—­ìˆœìœ¼ë¡œ ë°˜ë³µí•˜ì—¬ ë¦¬ìŠ¤ë„ˆë¥¼ ì œê±°
         for (int i = subscribers.Count - 1; i >= 0; i--)
         {
             if (subscribers[i] == listener)
@@ -123,23 +165,52 @@ public class EventBusManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ÀÌº¥Æ®¸¦ ¹ßÇàÇÏ´Â ¸Ş¼­µå
+    /// ì´ë²¤íŠ¸ë¥¼ ë°œí–‰í•˜ëŠ” ë©”ì„œë“œ
     /// </summary>
-    /// <param name="data">ÀÌº¥Æ®ÀÇ Å¸ÀÔ°ú ¼­ºê Å¸ÀÔÀÌ ÀúÀåµÇ¾îÀÖ´Â Å¬·¡½º</param>
+    /// <param name="data">ì´ë²¤íŠ¸ì˜ íƒ€ì…ê³¼ ì„œë¸Œ íƒ€ì…ì´ ì €ì¥ë˜ì–´ìˆëŠ” í´ë˜ìŠ¤</param>
     public static void Publish(EventData data)
     {
-        // _subscribersList¿¡ ÇØ´ç ÀÌº¥Æ® Å¸ÀÔÀ¸·Î ±¸µ¶µÈ ¸®½º³Ê ¸®½ºÆ®¸¦ °¡Á®¿È
-        if (Instance._subscribersList.TryGetValue(data.eventType, out List<DynamicEventListener> subscribers))
+        if (Instance.eventHandlers.TryGetValue(data.eventType.GetType(), out var handlers))
         {
-            // ¸®½ºÆ®¸¦ ¼øÈ¸ÇÏ¸ç °¢ ¸®½º³ÊÀÇ ÀÌº¥Æ®¸¦ ¹ßÇà
-            foreach (var subscriber in subscribers)
+            if (handlers.TryGetValue(data.eventType, out var eventList))
             {
-                subscriber.OnEvent(data);
+                foreach (var handler in eventList.ToList())
+                {
+                    handler?.Invoke(data);
+                }
             }
         }
         else
         {
             Debug.LogWarning($"No subscribers found for event type: {data.eventType}");
+        }
+    }
+
+    public static void Subscribe<T>(T eventType, Action<EventData> handler) where T : Enum
+    {
+        var type = typeof(T);
+        if (!Instance.eventHandlers.ContainsKey(type))
+        {
+            Instance.eventHandlers[type] = new Dictionary<Enum, List<Action<EventData>>>();
+        }
+
+        if (!Instance.eventHandlers[type].ContainsKey(eventType))
+        {
+            Instance.eventHandlers[type][eventType] = new List<Action<EventData>>();
+        }
+
+        Instance.eventHandlers[type][eventType].Add(handler);
+    }
+
+    public static void Unsubscribe<T>(T eventType, Action<EventData> handler) where T : Enum
+    {
+        var type = typeof(T);
+        if (Instance.eventHandlers.TryGetValue(type, out var handlers))
+        {
+            if (handlers.TryGetValue(eventType, out var eventList))
+            {
+                eventList.Remove(handler);
+            }
         }
     }
 }

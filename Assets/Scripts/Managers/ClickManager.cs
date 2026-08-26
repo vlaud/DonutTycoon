@@ -8,10 +8,17 @@ public class ClickManager : MonoBehaviour
 
     private float lastClickTime = 0f;
     [SerializeField] private ClickController lastClickedTarget = null;
+    public ClickController LastClickedTarget => lastClickedTarget;
     private bool isWaitingForDoubleClick = false;
+
 
     private void Update()
     {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            ExitGame();
+        }
+        
         if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject())
         {
             Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -29,24 +36,28 @@ public class ClickManager : MonoBehaviour
             {
                 HandleClick(clickedTarget);
             }
+            else
+            {
+                Gamemanager.GetUIController.HideOrderMenu();
+            }
         }
     }
 
     private void HandleClick(ClickController target)
     {
         float time = Time.time;
-
+        
         if (isWaitingForDoubleClick
             && target == lastClickedTarget
             && time - lastClickTime <= doubleClickThreshold)
         {
-            // ´õºí Å¬¸¯
+            // ë”ë¸” í´ë¦­
             isWaitingForDoubleClick = false;
             target.onDoubleClick.Invoke();
         }
         else
         {
-            // ½Ì±Û Å¬¸¯
+            // ì‹±ê¸€ í´ë¦­
             lastClickTime = time;
             lastClickedTarget = target;
             isWaitingForDoubleClick = true;
@@ -65,7 +76,7 @@ public class ClickManager : MonoBehaviour
         }
     }
 
-    private void NotifyClickMissed()
+    public void NotifyClickMissed()
     {
         // Notify the ClickController that the click was missed
         if (lastClickedTarget != null)
@@ -73,5 +84,14 @@ public class ClickManager : MonoBehaviour
             lastClickedTarget.onClickMissed.Invoke();
             lastClickedTarget = null;
         }
+    }
+
+    public void ExitGame()
+    {
+        Application.Quit();
+
+        #if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+        #endif
     }
 }

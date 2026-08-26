@@ -1,12 +1,34 @@
 using UnityEngine;
 
 [RequireComponent(typeof(DynamicEventInvoker))]
-public class TempTimer : MonoBehaviour
+[AutoEventSubscriber(typeof(TimerEventEnum))]
+public class TempTimer : MonoBehaviour, IEventSubscriber<TimerEventEnum>
 {
     [SerializeField] private DynamicEventInvoker dynamicEventInvoker;
     private EventData TimerEventData { get; set; } = new EventData(GameEventEnum.TimerEvent, TimerEventEnum.TimeStop);
 
-    // ÀÎ½ºÆåÅÍ¿¡¼­ TempTimer¸¦ ¼³Á¤ÇÒ ¶§, DynamicEventInvoker°¡ ÀÚµ¿À¸·Î ¿¬°áµÇµµ·Ï ÇÕ´Ï´Ù.
+    // ì¸ìŠ¤í™í„°ì—ì„œ TempTimerë¥¼ ì„¤ì •í•  ë•Œ, DynamicEventInvokerê°€ ìë™ìœ¼ë¡œ ì—°ê²°ë˜ë„ë¡ í•©ë‹ˆë‹¤.
+
+    public void Subscribe()
+    {
+        EventBusManager.Subscribe<TimerEventEnum>(TimerEventEnum.TimeStop, (data) => OnEventReceived(TimerEventEnum.TimeStop, data));
+    }
+
+    public void Unsubscribe()
+    {
+        EventBusManager.Unsubscribe<TimerEventEnum>(TimerEventEnum.TimeStop, (data) => OnEventReceived(TimerEventEnum.TimeStop, data));
+    }
+
+    public void OnEventReceived(TimerEventEnum eventType, EventData data)
+    {
+        switch (eventType)
+        {
+            case TimerEventEnum.TimeStop:
+                Debug.Log("Time stopped");
+                break;
+                
+        }
+    }
     private void OnValidate()
     {
         if (dynamicEventInvoker == null)
@@ -33,7 +55,7 @@ public class TempTimer : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            dynamicEventInvoker.Publish(TimerEventData);
+            EventBusManager.Publish(TimerEventData);
             TimerEventData.SetSubType(TimerEventEnum.TimeStart);
         }
     }

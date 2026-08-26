@@ -14,7 +14,11 @@ public class WaitState : iState
 
     public void Enter()
     {
-
+        if (customer.TargetIndex == 0)
+        {
+            Gamemanager.GetTimerManager.AddTimer(customer);
+            customer.SetIsTimerReserved(true);
+        }
     }
 
     public void Execute()

@@ -32,3 +32,10 @@ public class TempObject : MonoBehaviour
 
     }
 }
+
+public enum ObjectPoolEventEnum
+{
+    None,
+    Get,
+    Release,
+}

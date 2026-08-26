@@ -14,7 +14,7 @@ public class NoneState : iState
 
     public void Enter()
     {
-
+        customer.SetIsTimerReserved(false);
     }
 
     public void Execute()

@@ -27,14 +27,12 @@ public class CustomerStateView : MonoBehaviour
 
     private void OnStateChanged(iState state)
     {
-        Debug.Log("State changed to: " + state);
         ChangeMeshColor(state);
     }
 
     // set mesh material to the current state's associated color
     private void ChangeMeshColor(iState state)
     {
-        Debug.Log("Changing mesh color to: " + state.MeshColor);
         if (spriteRenderer == null) return;
 
         spriteRenderer.color = state.MeshColor;

@@ -15,6 +15,7 @@ public class LeaveState : iState
     public void Enter()
     {
         Gamemanager.GetInLineManager.RemoveCustomer(customer);
+        Gamemanager.GetTimerManager.RemoveTimer(customer);
         customer.SetMoveTarget(Gamemanager.GetCustomerSpawner.Dismisspos);
     }
 

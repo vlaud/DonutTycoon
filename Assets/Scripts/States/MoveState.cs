@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// ÀÌ°ÍÀº Àü¿ª »óÅÂÀÌ´Ù. °í°´ÀÌ ÀÌµ¿ÇÏ´Â »óÅÂ¸¦ ³ªÅ¸³½´Ù.
+/// ì´ê²ƒì€ ì „ì—­ ìƒíƒœì´ë‹¤. ê³ ê°ì´ ì´ë™í•˜ëŠ” ìƒíƒœë¥¼ ë‚˜íƒ€ë‚¸ë‹¤.
 /// </summary>
 public class MoveState : iState
 {
@@ -11,7 +11,7 @@ public class MoveState : iState
     {
         this.customer = customer;
     }
-    // ´Þ¸®±â »ö»ó ÃßÃµ
+    // ë‹¬ë¦¬ê¸° ìƒ‰ìƒ ì¶”ì²œ
     private Color meshColor = Color.red;
     public Color MeshColor { get => meshColor; set => meshColor = value; }
 

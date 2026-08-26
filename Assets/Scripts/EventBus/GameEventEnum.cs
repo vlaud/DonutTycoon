@@ -1,28 +1,28 @@
 using System;
 
 /// <summary>
-/// °ÔÀÓ ÀÌº¥Æ®ÀÇ ¿­°ÅÇü
+/// ê²Œì„ ì´ë²¤íŠ¸ì˜ ì—´ê±°í˜•
 /// </summary>
 public enum GameEventEnum
 {
-    None, // ±âº»°ª
-    CustomerEvent, // °í°´ ÀÌº¥Æ®
-    TimerEvent, // Å¸ÀÌ¸Ó ÀÌº¥Æ®
-    ObjectPoolEvent, // ¿ÀºêÁ§Æ® Ç® ÀÌº¥Æ®
-    ClickEvent, // Å¬¸¯ ÀÌº¥Æ®
+    None, // ê¸°ë³¸ê°’
+    CustomerEvent, // ê³ ê° ì´ë²¤íŠ¸
+    TimerEvent, // íƒ€ì´ë¨¸ ì´ë²¤íŠ¸
+    ObjectPoolEvent, // ì˜¤ë¸Œì íŠ¸ í’€ ì´ë²¤íŠ¸
+    ClickEvent, // í´ë¦­ ì´ë²¤íŠ¸
 }
 
 /// <summary>
-/// ÀÌº¥Æ® µ¥ÀÌÅÍ Å¬·¡½º
+/// ì´ë²¤íŠ¸ ë°ì´í„° í´ë˜ìŠ¤
 /// </summary>
 public class EventData
 {
-    public GameEventEnum eventType; // °ÔÀÓ ÀÌº¥Æ®ÀÇ ¿­°ÅÇü
-    public Type subType; // ¼­ºê ÀÌº¥Æ® ¿­°ÅÇü Å¸ÀÔ
-    public Enum subValue; // ¼­ºê ÀÌº¥Æ® ¿­°ÅÇü °ª
+    public GameEventEnum eventType; // ê²Œì„ ì´ë²¤íŠ¸ì˜ ì—´ê±°í˜•
+    public Type subType; // ì„œë¸Œ ì´ë²¤íŠ¸ ì—´ê±°í˜• íƒ€ì…
+    public Enum subValue; // ì„œë¸Œ ì´ë²¤íŠ¸ ì—´ê±°í˜• ê°’
 
     /// <summary>
-    /// ÀÌº¥Æ® µ¥ÀÌÅÍ »ı¼ºÀÚ : ¼­ºê ÀÌº¥Æ® ¿­°ÅÇü Å¸ÀÔÀÌ ¾ø´Â °æ¿ì
+    /// ì´ë²¤íŠ¸ ë°ì´í„° ìƒì„±ì : ì„œë¸Œ ì´ë²¤íŠ¸ ì—´ê±°í˜• íƒ€ì…ì´ ì—†ëŠ” ê²½ìš°
     /// </summary>
     /// <param name="eventType"></param>
     public EventData(GameEventEnum eventType)
@@ -33,10 +33,10 @@ public class EventData
     }
 
     /// <summary>
-    /// ÀÌº¥Æ® µ¥ÀÌÅÍ »ı¼ºÀÚ : ¼­ºê ÀÌº¥Æ® ¿­°ÅÇü Å¸ÀÔÀÌ ÀÖ´Â °æ¿ì
+    /// ì´ë²¤íŠ¸ ë°ì´í„° ìƒì„±ì : ì„œë¸Œ ì´ë²¤íŠ¸ ì—´ê±°í˜• íƒ€ì…ì´ ìˆëŠ” ê²½ìš°
     /// </summary>
-    /// <param name="eventType">°ÔÀÓ ÀÌº¥Æ®ÀÇ ¿­°ÅÇü</param>
-    /// <param name="subValue">¼­ºê ÀÌº¥Æ® ¿­°ÅÇü °ª</param>
+    /// <param name="eventType">ê²Œì„ ì´ë²¤íŠ¸ì˜ ì—´ê±°í˜•</param>
+    /// <param name="subValue">ì„œë¸Œ ì´ë²¤íŠ¸ ì—´ê±°í˜• ê°’</param>
     public EventData(GameEventEnum eventType, Enum subValue)
     {
         this.eventType = eventType;
@@ -45,7 +45,7 @@ public class EventData
     }
 
     /// <summary>
-    /// ¼­ºê ÀÌº¥Æ® ¿­°ÅÇü °ªÀ» ¼³Á¤ÇÏ´Â ¸Ş¼­µå
+    /// ì„œë¸Œ ì´ë²¤íŠ¸ ì—´ê±°í˜• ê°’ì„ ì„¤ì •í•˜ëŠ” ë©”ì„œë“œ
     /// </summary>
     /// <param name="subValue"></param>
     public void SetSubType(Enum subValue)
